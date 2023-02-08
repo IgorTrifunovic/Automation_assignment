@@ -1,5 +1,6 @@
 import time
 from base.selenium_wrapper import SeleniumDriver
+import random
 
 class ProductPage(SeleniumDriver):
     def __init__(self, driver):
@@ -11,24 +12,30 @@ class ProductPage(SeleniumDriver):
     _greenCart_title = ".brand.greenLogo"
     _product_prices = "p[class='product-price']"
     _all_plus_buttons = "a[class='increment']"
-    _all_add_to_cart_buttons = "//button[normalize-space()='ADD TO CART']"  # xpath
-    _addBtn_for_item_with_price = "//p[normalize-space()='{}']/following-sibling::div/button"  # xpath
+    _all_add_to_cart_buttons = "//button[normalize-space()='ADD TO CART']"
+    _addBtn_for_item_with_price = "//p[normalize-space()='{}']/following-sibling::div/button"
     _cartBtn = "a[class='cart-icon']"
-    _checkoutBtn = "//button[normalize-space()='PROCEED TO CHECKOUT']"  # xpath
+    _checkoutBtn = "//button[normalize-space()='PROCEED TO CHECKOUT']"
     _total_amount = ".totAmt"
     _input_promoCode = 'input[class="promoCode"]'
-    _apply_promoCodeBtn = "//button[normalize-space()='Apply']"   # xpath
-    _place_orderBtn = "//button[normalize-space()='Place Order']"   # xpath
-    _applying_in_processBtn = "//button[@class='promoBtn' and contains(., 'Applying')]"  # xpath
-    _invalid_promoCode_message = "//span[@class='promoInfo' and contains(., 'Invalid code')]"  # xpath
+    _apply_promoCodeBtn = "//button[normalize-space()='Apply']"
+    _place_orderBtn = "//button[normalize-space()='Place Order']"
+    _applying_in_processBtn = "//button[@class='promoBtn' and contains(., 'Applying')]"
+    _invalid_promoCode_message = "//span[@class='promoInfo' and contains(., 'Invalid code')]"
     _select_country_dropdown = "select[style]"
     _terms_conditions_checkbox = "input[type='checkbox']"
-    _proceed_placeOrderBtn = "//button[normalize-space()='Proceed']"   # xpath
-    _selectOption_from_selectDropdown = "//option[normalize-space()='Select']"   # xpath
+    _proceed_Btn = "//button[normalize-space()='Proceed']"
+    _selectOption_from_selectDropdown = "//option[normalize-space()='Select']"
     _countryOption_from_selectDropdown = "option[value={}]"
-    _please_accept_terms_message = "//b[normalize-space()='Please accept Terms & Conditions - Required']"  # xpath
-
-
+    _please_accept_terms_message = "//b[normalize-space()='Please accept Terms & Conditions - Required']"
+    _all_countries_in_dropdown = "option[value]"
+    _any_country_from_dropdown = "option[value='{}']"
+    _actions_section = "//h1[normalize-space()='ACTIONS']"
+    _drag_box = "//b[normalize-space()='DRAG ME TO MY TARGET!']"
+    _drag_location_element = "//b[normalize-space()='DROP HERE!']"
+    _hoverBtn = ".dropdown.hover"
+    _link1Btn = "//div[@id='div-hover']/div[1]/div/a"
+    _comments_input = "textarea[placeholder='Comments']"
 
     def verifyHomepageTitleElement(self):
         title = self.isElementPresent(self._greenCart_title, locatorType="css")
@@ -80,7 +87,7 @@ class ProductPage(SeleniumDriver):
         return pricesInt[-3]
 
     def select_cheapest_item(self):
-        price = self.get_cheapest_item()    # check is locator Int sensitive / it is not
+        price = self.get_cheapest_item()
         self.elementClick(self._addBtn_for_item_with_price.format(price), "xpath")
         time.sleep(1)
 
@@ -114,23 +121,70 @@ class ProductPage(SeleniumDriver):
                 self.log.info("Waiting for promo code confirmation...")
             else:
                 return self.isElementPresent(self._invalid_promoCode_message, "xpath")
-        time.sleep(3)
+        time.sleep(2)
 
     def goto_place_order(self):
         time.sleep(1)
         self.elementClick(self._place_orderBtn, "xpath")
-        time.sleep(3)
-
-    def check_is_first_select_option_disabled(self):
         time.sleep(2)
-        selectOption = self.isEnabled(self._selectOption_from_selectDropdown, "xpath")
-        if selectOption is False:
-            return True
-        else:
-            return False
 
-    def use_select_country_dropdown(self):
+    def click_proceed(self):
+        self.elementClick(self._proceed_Btn, "xpath")
+        time.sleep(1)
+
+    def check_terms_err_message(self):
+        time.sleep(1)
+        self.elementClick(self._proceed_Btn, "xpath")
+        time.sleep(1)
+        return self.isElementPresent(self._please_accept_terms_message, "xpath")
+
+    def check_disabled_select_option(self):
+        return self.isEnabled(self._selectOption_from_selectDropdown, "xpath")
+
+    def select_country_from_dropdown(self):
+        allCountries = []
         self.elementClick(self._select_country_dropdown)
+        allDropdownOptions = self.getElementList(self._all_countries_in_dropdown)
+        for everyCountry in allDropdownOptions:
+            country = everyCountry.text
+            allCountries.append(country)
+        self.log.info(allCountries)
+        randomCountry = random.choice(allCountries)
+        self.log.info("Random country is: " + randomCountry)
+        self.elementClick(self._any_country_from_dropdown.format(randomCountry))
 
+    def takeScreenshot(self):
+        self.getScreenshot()
 
+    def takeActionsScreenshot(self):
+        element = self.getElement(self._actions_section, "xpath")
+        self.scrollIntoView(element)
+        self.webScroll("down")
+        self.getScreenshot()
+        self.elementClick(self._actions_section, "xpath")
+
+    def takePageTitle(self):
+        title = self.getTitle()
+        self.log.info("=== Title of the page is: " + title + " ===")
+        return title
+
+    def dragAndDropBox(self):
+        sourceBox = self.getElement(self._drag_box, "xpath")
+        targetLocation = self.getElement(self._drag_location_element, "xpath")
+        self.dragAndDrop(sourceBox, targetLocation)
+        time.sleep(2)
+
+    def hoverOverBtn(self):
+        element = self.getElement(self._hoverBtn)
+        self.hover(element)
+
+    def confirmLink1_isNot_visible(self):
+        return self.isElementDisplayed(self._link1Btn, "xpath")
+
+    def clickLink1(self):
+        self.elementClick(self._link1Btn, "xpath")
+
+    def enterTextInComments(self, alert_text):
+        time.sleep(1)
+        self.sendKeys(alert_text, self._comments_input)
 

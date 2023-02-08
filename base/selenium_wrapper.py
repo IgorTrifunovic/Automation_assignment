@@ -1,13 +1,12 @@
 import logging
-import time
 import traceback
-from selenium import webdriver
-from selenium.webdriver import Remote
 from selenium.webdriver import ActionChains
 from selenium.webdriver.common.by import By
 from utilities.custom_logger import customLogger
-from selenium.webdriver.support import expected_conditions as ec
 from selenium.common.exceptions import WebDriverException
+from PIL import Image
+from datetime import datetime
+
 
 
 class SeleniumDriver():
@@ -37,7 +36,7 @@ class SeleniumDriver():
         return False
 
 
-    def getElement(self, locator, locatorType=""):
+    def getElement(self, locator, locatorType="css"):
         element = None
         try:
             locatorType = locatorType.lower()
@@ -162,44 +161,34 @@ class SeleniumDriver():
             print("Element not found")
             return False
 
-    def getAttributeTitle(self, locator, locatorType=""):
-            titleValue = None
-            try:
-                locatorType = locatorType.lower()
-                byType = self.getByType(locatorType)
-                titleValue = self.driver.find_element(byType, locator).get_attribute("title")
-                self.log.info("Element found with title attribute value!")
-            except:
-                self.log.info("Element not found with title attribute!")
-                self.log.error("Exception Caught: {}".format(traceback.format_exc()))
-                # self.log.error("".join(traceback.format_stack()))
-                self.log.info("title value is: " + titleValue)
-            return titleValue
+    def scrollIntoView(self, element):
+        actions = ActionChains(self.driver)
+        actions.move_to_element(element).perform()
 
-    def webScroll(self, direction="up"):
+    def webScroll(self, direction="down"):
         if direction == "up":
             # Scroll Up
-            self.driver.execute_script("window.scrollBy(0, -1000);")
+            self.driver.execute_script("window.scrollBy(0, -300);")
 
         if direction == "down":
             # Scroll Down
-            self.driver.execute_script("window.scrollBy(0, 1700);")
+            self.driver.execute_script("window.scrollBy(0, 300);")
 
-    def switchToNewWindow(self):
-        self.log.info("===== entered switch window =====")
-        remote = Remote(self.driver)
-        remote.switch_to.alert
+    def getScreenshot(self):
+        time = datetime.now().strftime("%H,%M,%S,%f")
+        self.driver.save_screenshot("C:/CODE/4Create_assignment/Screenshots/image{}.png".format(time))
 
+    def getTitle(self):
+        return self.driver.title
 
-    def closeWindow(self):
-        remote = Remote(self.driver)
-        remote.close()
+    def dragAndDrop(self, source, target):
+        actions = ActionChains(self.driver)
+        actions.drag_and_drop(source, target).perform()
 
-    def moveSlideBarLeft(self, element, sliderRail):
-        move = ActionChains(self.driver)
-        time.sleep(1)
-        move.click_and_hold(element).move_by_offset(-0.3 * sliderRail.size['width'], 0).release().perform()
-        self.log.info("====== executed SeleniumDrivers move slide bar method =======")
+    def hover(self, element):
+        actions = ActionChains(self.driver)
+        actions.move_to_element(element).perform()
+
 
     def getElementAttributeValue(self, attribute, element=None, locator="", locatorType="id"):
         """
@@ -235,7 +224,7 @@ class SeleniumDriver():
             else:
                 value = self.getElementAttributeValue(element=element, attribute="class")
                 self.log.info("Attribute value From Application Web UI --> :: " + value)
-                enabled = not ("mkUa-isDisabled" in value)
+                enabled = not ("Disabled" in value)
             if enabled:
                 self.log.info("Element :: above is enabled!")
             else:
