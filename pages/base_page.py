@@ -4,12 +4,10 @@ from selenium.webdriver import ActionChains
 from selenium.webdriver.common.by import By
 from utilities.custom_logger import customLogger
 from selenium.common.exceptions import WebDriverException
-from PIL import Image
 from datetime import datetime
 
 
-
-class SeleniumDriver():
+class BasePage:
     log = customLogger(logging.DEBUG)
 
     def __init__(self, driver):

@@ -1,8 +1,11 @@
 import time
-from base.selenium_wrapper import SeleniumDriver
+from pages.base_page import BasePage
 import random
 
-class ProductPage(SeleniumDriver):
+from tests.base_test import BaseTest
+
+
+class ProductPage(BasePage):
     def __init__(self, driver):
         super().__init__(driver)
         self.driver = driver
@@ -36,12 +39,14 @@ class ProductPage(SeleniumDriver):
     _hoverBtn = ".dropdown.hover"
     _link1Btn = "//div[@id='div-hover']/div[1]/div/a"
     _comments_input = "textarea[placeholder='Comments']"
+    _successful_purchase = "span[style='color:green;font-size:25px']"
+
 
     def verifyHomepageTitleElement(self):
         title = self.isElementPresent(self._greenCart_title, locatorType="css")
+        self.log.info("=====> Homepage TEST CASE assertion data is: ")
         self.log.info(title)
         return title
-
 
     def add_4_same_items_in_cart(self):
         time.sleep(1)
@@ -63,7 +68,6 @@ class ProductPage(SeleniumDriver):
 
     def get_cheapest_item(self):
         pricesInt = []
-        time.sleep(1)
         pricesStr = list(filter(None, self.get_visible_prices()))
         for each in pricesStr:
             pricesInt.append(int(each))
@@ -89,48 +93,37 @@ class ProductPage(SeleniumDriver):
     def select_cheapest_item(self):
         price = self.get_cheapest_item()
         self.elementClick(self._addBtn_for_item_with_price.format(price), "xpath")
-        time.sleep(1)
 
     def select_most_expensive_item(self):
         price = self.get_most_expensive_item()
         self.elementClick(self._addBtn_for_item_with_price.format(price), "xpath")
-        time.sleep(1)
 
     def select_third_item(self):
         price = self.get_third_item()
         self.elementClick(self._addBtn_for_item_with_price.format(price), "xpath")
-        time.sleep(1)
 
     def goto_cart(self):
         self.elementClick(self._cartBtn)
-        time.sleep(1)
         self.elementClick(self._checkoutBtn, "xpath")
 
     def enter_promo_code(self):
-        time.sleep(1)
         total_amount = self.getText(self._total_amount)
-        self.log.info(total_amount)
         self.sendKeys(total_amount, self._input_promoCode)
         self.elementClick(self._apply_promoCodeBtn, "xpath")
-        time.sleep(1)
 
     def check_promo_code_message(self):
-        for x in range(20):
-            if self.isElementPresent(self._applying_in_processBtn, "xpath") is True:
-                time.sleep(0.5)
-                self.log.info("Waiting for promo code confirmation...")
-            else:
-                return self.isElementPresent(self._invalid_promoCode_message, "xpath")
-        time.sleep(2)
+        if self.isElementPresent(self._invalid_promoCode_message, "xpath") is False in range(10):
+            time.sleep(1)
+            self.log.info("Waiting for promo code confirmation...")
+        else:
+            return self.isElementPresent(self._invalid_promoCode_message, "xpath")
 
     def goto_place_order(self):
-        time.sleep(1)
         self.elementClick(self._place_orderBtn, "xpath")
-        time.sleep(2)
+        time.sleep(1)
 
     def click_proceed(self):
         self.elementClick(self._proceed_Btn, "xpath")
-        time.sleep(1)
 
     def check_terms_err_message(self):
         time.sleep(1)
@@ -152,16 +145,29 @@ class ProductPage(SeleniumDriver):
         randomCountry = random.choice(allCountries)
         self.log.info("Random country is: " + randomCountry)
         self.elementClick(self._any_country_from_dropdown.format(randomCountry))
+        time.sleep(1)
 
-    def takeScreenshot(self):
+    def check_successful_purchase(self):
+        self.elementClick(self._terms_conditions_checkbox)
+        self.click_proceed()
+        time.sleep(1)
+        successful_page = self.getElement(self._successful_purchase)
+        self.log.info(successful_page.text)
+        return successful_page.text
+
+    def takeSecondScreenshot(self):
         self.getScreenshot()
+        self.driver.switch_to.window(self.driver.window_handles[2])
 
-    def takeActionsScreenshot(self):
+    def takeFirstScreenshot(self):
+        self.driver.switch_to.window(self.driver.window_handles[1])
+        self.driver.get(BaseTest.secondUrl)
         element = self.getElement(self._actions_section, "xpath")
         self.scrollIntoView(element)
         self.webScroll("down")
         self.getScreenshot()
         self.elementClick(self._actions_section, "xpath")
+        self.driver.switch_to.window(self.driver.window_handles[1])
 
     def takePageTitle(self):
         title = self.getTitle()
@@ -172,7 +178,7 @@ class ProductPage(SeleniumDriver):
         sourceBox = self.getElement(self._drag_box, "xpath")
         targetLocation = self.getElement(self._drag_location_element, "xpath")
         self.dragAndDrop(sourceBox, targetLocation)
-        time.sleep(2)
+        time.sleep(1)
 
     def hoverOverBtn(self):
         element = self.getElement(self._hoverBtn)
